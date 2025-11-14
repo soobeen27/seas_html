@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자리 배치 바꾸기</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chalkboard {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            background-color: #4a5959; /* 칠판 색상 */
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 5px solid #2c3e50;
+        }
+
+        .seating-chart {
+            display: grid;
+            /* 4열 정의: 왼쪽 2개 좁게, 가운데 넓은 간격, 오른쪽 1개 */
+            /* 1fr 1fr (1, 2열) 2fr (간격) 1fr (3열) */
+            grid-template-columns: repeat(2, 1fr) 2fr 1fr;
+            /* 5행 정의: 각 행은 자리 1개를 포함, 마지막 행은 13번 자리 */
+            grid-template-rows: repeat(5, 1fr);
+            gap: 15px; /* 그리드 셀 간의 간격 */
+            height: 400px; /* 전체 배치 영역 높이 */
+            margin-bottom: 30px;
+            padding: 10px;
+            border: 1px dashed #ccc; /* 자리 영역 표시용 */
+        }
+
+        .seat {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background-color: #2ecc71; /* 자리 색상 (녹색) */
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease-in-out;
+            cursor: default;
+        }
+        
+        .seat:hover {
+            transform: scale(1.05);
+        }
+
+        /* 1, 2, 3열의 자리 위치 지정 */
+        /* 요청하신 레이아웃 형태에 맞게 grid-area를 사용해 배치 */
+        #seat-1 { grid-area: 1 / 1; }
+        #seat-2 { grid-area: 1 / 2; }
+        #seat-3 { grid-area: 1 / 4; }
+
+        #seat-4 { grid-area: 2 / 1; }
+        #seat-5 { grid-area: 2 / 2; }
+        #seat-6 { grid-area: 2 / 4; }
+
+        #seat-7 { grid-area: 3 / 1; }
+        #seat-8 { grid-area: 3 / 2; }
+        #seat-9 { grid-area: 3 / 4; }
+
+        #seat-10 { grid-area: 4 / 1; }
+        #seat-11 { grid-area: 4 / 2; }
+        #seat-12 { grid-area: 4 / 4; }
+
+        /* 13번 자리는 오른쪽 끝, 가장 하단에 위치 */
+        #seat-13 { grid-area: 5 / 4; }
+
+        #shuffleButton {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            color: white;
+            background-color: #3498db; /* 버튼 색상 (파란색) */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #shuffleButton:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="chalkboard">칠판</div>
+
+        <div class="seating-chart" id="seatingChart">
+            <!-- HTML에서 초기 숫자를 자리 위치에 맞게 설정했습니다. -->
+            <div class="seat" id="seat-1">1</div>
+            <div class="seat" id="seat-2">2</div>
+            <div class="seat" id="seat-3">3</div>
+            <div class="seat" id="seat-4">4</div>
+            <div class="seat" id="seat-5">5</div>
+            <div class="seat" id="seat-6">6</div>
+            <div class="seat" id="seat-7">7</div>
+            <div class="seat" id="seat-8">8</div>
+            <div class="seat" id="seat-9">9</div>
+            <div class="seat" id="seat-10">10</div>
+            <div class="seat" id="seat-11">11</div>
+            <div class="seat" id="seat-12">12</div>
+            <div class="seat" id="seat-13">13</div>
+        </div>
+
+        <button id="shuffleButton">자리 바꾸기</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 자리 요소들을 배열로 가져옵니다.
+            const seatElements = Array.from(document.querySelectorAll('.seat'));
+            
+            // 셔플(shuffle) 함수 - 피셔-예이츠 셔플 알고리즘
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            // 자리 숫자를 업데이트하는 함수
+            function updateSeats() {
+                // 1부터 13까지의 새로운 숫자를 만듭니다.
+                const numbers = Array.from({ length: 13 }, (_, i) => i + 1); // [1, 2, ..., 13]
+                
+                // 숫자를 무작위로 섞습니다.
+                shuffleArray(numbers);
+                
+                // 각 자리 요소의 내용(textContent)을 섞인 숫자로 업데이트합니다.
+                seatElements.forEach((seat, index) => {
+                    seat.textContent = numbers[index];
+                });
+            }
+
+            // '자리 바꾸기' 버튼에 이벤트 리스너를 추가합니다.
+            const shuffleButton = document.getElementById('shuffleButton');
+            shuffleButton.addEventListener('click', updateSeats);
+            
+            // **[수정] 초기 페이지 로드 시에는 자리를 섞지 않습니다. (HTML의 초기값 유지)**
+            // updateSeats(); // 이 줄을 제거하여 초기 셔플을 막았습니다.
+        });
+    </script>
+
+</body>
+</html>
